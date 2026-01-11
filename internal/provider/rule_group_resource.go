@@ -15,7 +15,7 @@ import (
 	"github.com/renescheepers/terraform-provider-firefly3/internal/client"
 )
 
-// Ensure provider defined types fully satisfy framework interfaces.
+// Interface guards
 var _ resource.Resource = &RuleGroupResource{}
 var _ resource.ResourceWithImportState = &RuleGroupResource{}
 
@@ -23,12 +23,10 @@ func NewRuleGroupResource() resource.Resource {
 	return &RuleGroupResource{}
 }
 
-// RuleGroupResource defines the resource implementation.
 type RuleGroupResource struct {
 	client *client.Client
 }
 
-// RuleGroupResourceModel describes the resource data model.
 type RuleGroupResourceModel struct {
 	ID          types.String `tfsdk:"id"`
 	Title       types.String `tfsdk:"title"`
@@ -175,7 +173,6 @@ func (r *RuleGroupResource) ImportState(ctx context.Context, req resource.Import
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-// modelToAPIRuleGroup converts the Terraform model to an API rule group
 func (r *RuleGroupResource) modelToAPIRuleGroup(data *RuleGroupResourceModel) *client.RuleGroup {
 	ruleGroup := &client.RuleGroup{
 		Title:       data.Title.ValueString(),
@@ -190,7 +187,6 @@ func (r *RuleGroupResource) modelToAPIRuleGroup(data *RuleGroupResourceModel) *c
 	return ruleGroup
 }
 
-// apiRuleGroupToModel converts an API rule group to the Terraform model
 func (r *RuleGroupResource) apiRuleGroupToModel(ruleGroup *client.RuleGroup, data *RuleGroupResourceModel) {
 	data.ID = types.StringValue(ruleGroup.ID)
 	data.Title = types.StringValue(ruleGroup.Title)

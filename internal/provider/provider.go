@@ -94,7 +94,6 @@ func (p *Firefly3Provider) Configure(ctx context.Context, req provider.Configure
 		return
 	}
 
-	// Create the Firefly3 API client
 	apiClient := client.NewClient(endpoint, apiKey)
 	resp.DataSourceData = apiClient
 	resp.ResourceData = apiClient
@@ -102,6 +101,7 @@ func (p *Firefly3Provider) Configure(ctx context.Context, req provider.Configure
 
 func (p *Firefly3Provider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
+		NewCategoryResource,
 		NewRuleResource,
 		NewRuleGroupResource,
 	}

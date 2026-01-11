@@ -19,7 +19,7 @@ import (
 	"github.com/renescheepers/terraform-provider-firefly3/internal/client"
 )
 
-// Ensure provider defined types fully satisfy framework interfaces.
+// Interface guards
 var _ resource.Resource = &RuleResource{}
 var _ resource.ResourceWithImportState = &RuleResource{}
 
@@ -27,12 +27,10 @@ func NewRuleResource() resource.Resource {
 	return &RuleResource{}
 }
 
-// RuleResource defines the resource implementation.
 type RuleResource struct {
 	client *client.Client
 }
 
-// RuleResourceModel describes the resource data model.
 type RuleResourceModel struct {
 	ID             types.String `tfsdk:"id"`
 	Title          types.String `tfsdk:"title"`
@@ -46,7 +44,6 @@ type RuleResourceModel struct {
 	Actions        types.List   `tfsdk:"actions"`
 }
 
-// RuleTriggerModel describes a rule trigger.
 type RuleTriggerModel struct {
 	Type           types.String `tfsdk:"type"`
 	Value          types.String `tfsdk:"value"`
@@ -55,7 +52,6 @@ type RuleTriggerModel struct {
 	StopProcessing types.Bool   `tfsdk:"stop_processing"`
 }
 
-// RuleActionModel describes a rule action.
 type RuleActionModel struct {
 	Type           types.String `tfsdk:"type"`
 	Value          types.String `tfsdk:"value"`
@@ -220,7 +216,7 @@ func (r *RuleResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	r.apiRuleToModel(ctx, createdRule, &data)
+	r.apiRuleToModel(createdRule, &data)
 
 	tflog.Trace(ctx, "created a rule resource")
 
@@ -241,7 +237,7 @@ func (r *RuleResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	r.apiRuleToModel(ctx, rule, &data)
+	r.apiRuleToModel(rule, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -260,15 +256,13 @@ func (r *RuleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	
 	updatedRule, err := r.client.UpdateRule(ctx, data.ID.ValueString(), rule)
 	if err != nil {
-		tflog.Info(ctx, "abc", map[string]any{"error": err, "rule": rule})
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update rule, got error: %s, rule %+v", err, rule))
 		return
 	}
 
-	r.apiRuleToModel(ctx, updatedRule, &data)
+	r.apiRuleToModel(updatedRule, &data)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -292,7 +286,6 @@ func (r *RuleResource) ImportState(ctx context.Context, req resource.ImportState
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-// modelToAPIRule converts the Terraform model to an API rule
 func (r *RuleResource) modelToAPIRule(ctx context.Context, data *RuleResourceModel) (*client.Rule, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -306,7 +299,6 @@ func (r *RuleResource) modelToAPIRule(ctx context.Context, data *RuleResourceMod
 		StopProcessing: data.StopProcessing.ValueBool(),
 	}
 
-	// Convert triggers
 	var triggerModels []RuleTriggerModel
 	diags.Append(data.Triggers.ElementsAs(ctx, &triggerModels, false)...)
 	if diags.HasError() {
@@ -324,7 +316,6 @@ func (r *RuleResource) modelToAPIRule(ctx context.Context, data *RuleResourceMod
 		}
 	}
 
-	// Convert actions
 	var actionModels []RuleActionModel
 	diags.Append(data.Actions.ElementsAs(ctx, &actionModels, false)...)
 	if diags.HasError() {
@@ -344,8 +335,7 @@ func (r *RuleResource) modelToAPIRule(ctx context.Context, data *RuleResourceMod
 	return rule, diags
 }
 
-// apiRuleToModel converts an API rule to the Terraform model
-func (r *RuleResource) apiRuleToModel(ctx context.Context, rule *client.Rule, data *RuleResourceModel) {
+func (r *RuleResource) apiRuleToModel(rule *client.Rule, data *RuleResourceModel) {
 	data.ID = types.StringValue(rule.ID)
 	data.Title = types.StringValue(rule.Title)
 	data.Description = types.StringValue(rule.Description)
@@ -355,7 +345,6 @@ func (r *RuleResource) apiRuleToModel(ctx context.Context, rule *client.Rule, da
 	data.Strict = types.BoolValue(rule.Strict)
 	data.StopProcessing = types.BoolValue(rule.StopProcessing)
 
-	// Convert triggers
 	triggerAttrTypes := map[string]attr.Type{
 		"type":            types.StringType,
 		"value":           types.StringType,
@@ -376,7 +365,6 @@ func (r *RuleResource) apiRuleToModel(ctx context.Context, rule *client.Rule, da
 	}
 	data.Triggers, _ = types.ListValue(types.ObjectType{AttrTypes: triggerAttrTypes}, triggerValues)
 
-	// Convert actions
 	actionAttrTypes := map[string]attr.Type{
 		"type":            types.StringType,
 		"value":           types.StringType,
