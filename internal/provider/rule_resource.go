@@ -1,6 +1,3 @@
-// Copyright 2025
-// SPDX-License-Identifier: MPL-2.0
-
 package provider
 
 import (
@@ -98,7 +95,8 @@ func (r *RuleResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Required:            true,
 				MarkdownDescription: "When the rule should fire. Must be one of: `store-journal`, `update-journal`, or `manual-activation`.",
 				Validators: []validator.String{
-					stringvalidator.OneOf("store-journal", "update-journal", "manual-activation"),
+					stringvalidator.OneOf("store-journal"),
+					// stringvalidator.OneOf("store-journal", "update-journal", "manual-activation"), only store-journal due to a bug in the API.
 				},
 			},
 			"active": schema.BoolAttribute{
@@ -129,8 +127,8 @@ func (r *RuleResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 							MarkdownDescription: "The type of trigger (e.g., `description_contains`, `amount_more`, `from_account_is`).",
 						},
 						"value": schema.StringAttribute{
-							Required:            true,
-							MarkdownDescription: "The value to match against.",
+							Optional:            true,
+							MarkdownDescription: "The value to match against. Required for most trigger types, but some (like `has_any_tag`) only need 'true'.",
 						},
 						"active": schema.BoolAttribute{
 							Optional:            true,
@@ -262,9 +260,11 @@ func (r *RuleResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
+	
 	updatedRule, err := r.client.UpdateRule(ctx, data.ID.ValueString(), rule)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update rule, got error: %s", err))
+		tflog.Info(ctx, "abc", map[string]any{"error": err, "rule": rule})
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update rule, got error: %s, rule %+v", err, rule))
 		return
 	}
 

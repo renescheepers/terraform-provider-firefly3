@@ -1,10 +1,8 @@
-// Copyright IBM Corp. 2021, 2025
-// SPDX-License-Identifier: MPL-2.0
-
 package provider
 
 import (
 	"context"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -46,12 +44,12 @@ func (p *Firefly3Provider) Schema(ctx context.Context, req provider.SchemaReques
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "Endpoint for the Firefly 3 API",
-				Required:            true,
+				MarkdownDescription: "Endpoint for the Firefly III API. Can also be set via the `FIREFLY3_ENDPOINT` environment variable.",
+				Optional:            true,
 			},
 			"api_key": schema.StringAttribute{
-				MarkdownDescription: "API key for the Firefly 3 API",
-				Required:            true,
+				MarkdownDescription: "API key for the Firefly III API. Can also be set via the `FIREFLY3_API_KEY` environment variable.",
+				Optional:            true,
 				Sensitive:           true,
 			},
 		},
@@ -67,24 +65,37 @@ func (p *Firefly3Provider) Configure(ctx context.Context, req provider.Configure
 		return
 	}
 
+	// Use environment variables as fallback
+	endpoint := data.Endpoint.ValueString()
 	if data.Endpoint.IsNull() {
+		endpoint = os.Getenv("FIREFLY3_ENDPOINT")
+	}
+
+	apiKey := data.APIKey.ValueString()
+	if data.APIKey.IsNull() {
+		apiKey = os.Getenv("FIREFLY3_API_KEY")
+	}
+
+	if endpoint == "" {
 		resp.Diagnostics.AddError(
 			"Missing Endpoint",
-			"The provider cannot create the Firefly III API client because the endpoint is not configured.",
+			"The provider cannot create the Firefly III API client because the endpoint is not configured. "+
+				"Set it in the provider configuration or via the FIREFLY3_ENDPOINT environment variable.",
 		)
 		return
 	}
 
-	if data.APIKey.IsNull() {
+	if apiKey == "" {
 		resp.Diagnostics.AddError(
 			"Missing API Key",
-			"The provider cannot create the Firefly III API client because the API key is not configured.",
+			"The provider cannot create the Firefly III API client because the API key is not configured. "+
+				"Set it in the provider configuration or via the FIREFLY3_API_KEY environment variable.",
 		)
 		return
 	}
 
 	// Create the Firefly3 API client
-	apiClient := client.NewClient(data.Endpoint.ValueString(), data.APIKey.ValueString())
+	apiClient := client.NewClient(endpoint, apiKey)
 	resp.DataSourceData = apiClient
 	resp.ResourceData = apiClient
 }
@@ -92,6 +103,7 @@ func (p *Firefly3Provider) Configure(ctx context.Context, req provider.Configure
 func (p *Firefly3Provider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewRuleResource,
+		NewRuleGroupResource,
 	}
 }
 
