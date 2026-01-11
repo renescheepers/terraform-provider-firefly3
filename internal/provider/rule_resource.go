@@ -75,9 +75,13 @@ func (r *RuleResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			// Max length: https://github.com/firefly-iii/firefly-iii/blob/067112904e06a988ffb0ef83d36112e4adea6a68/app/Api/V1/Requests/Models/Rule/UpdateRequest.php#L137
 			"title": schema.StringAttribute{
 				Required:            true,
-				MarkdownDescription: "The title of the rule.",
+				MarkdownDescription: "The title of the rule. Must be at most 100 characters.",
+				Validators: []validator.String{
+					stringvalidator.LengthAtMost(100),
+				},
 			},
 			"description": schema.StringAttribute{
 				Optional:            true,

@@ -6,12 +6,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/renescheepers/terraform-provider-firefly3/internal/client"
@@ -51,9 +53,13 @@ func (r *CategoryResource) Schema(ctx context.Context, req resource.SchemaReques
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			// Max length: https://github.com/firefly-iii/firefly-iii/blob/067112904e06a988ffb0ef83d36112e4adea6a68/app/Api/V1/Requests/Models/Category/UpdateRequest.php#L62
 			"name": schema.StringAttribute{
 				Required:            true,
-				MarkdownDescription: "The name of the category.",
+				MarkdownDescription: "The name of the category. Must be at most 100 characters.",
+				Validators: []validator.String{
+					stringvalidator.LengthAtMost(100),
+				},
 			},
 			"notes": schema.StringAttribute{
 				Optional:            true,
