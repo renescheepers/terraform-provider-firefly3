@@ -33,4 +33,4 @@ go.work.sum
 
 .terraformrc.tf
 api_docs.yaml
-examples
+dist/
