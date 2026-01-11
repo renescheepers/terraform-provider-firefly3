@@ -1,3 +1,5 @@
+# Copyright (c) HashiCorp, Inc.
+
 provider "firefly3" {
   endpoint = "https://firefly3.example.com"
   api_key  = "TOKEN"

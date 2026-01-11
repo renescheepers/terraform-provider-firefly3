@@ -1,3 +1,5 @@
+# Copyright (c) HashiCorp, Inc.
+
 locals {
   categories = toset([
     "Abonnementen",
