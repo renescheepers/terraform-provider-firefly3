@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 )
 
@@ -59,6 +60,23 @@ type RuleData struct {
 	Attributes Rule   `json:"attributes"`
 }
 
+// unescapeHTML decodes HTML entities in all string fields
+func (r *Rule) unescapeHTML() {
+	r.Title = html.UnescapeString(r.Title)
+	r.Description = html.UnescapeString(r.Description)
+	r.RuleGroupTitle = html.UnescapeString(r.RuleGroupTitle)
+
+	for i := range r.Triggers {
+		r.Triggers[i].Type = html.UnescapeString(r.Triggers[i].Type)
+		r.Triggers[i].Value = html.UnescapeString(r.Triggers[i].Value)
+	}
+
+	for i := range r.Actions {
+		r.Actions[i].Type = html.UnescapeString(r.Actions[i].Type)
+		r.Actions[i].Value = html.UnescapeString(r.Actions[i].Value)
+	}
+}
+
 func (c *Client) CreateRule(ctx context.Context, rule *Rule) (*Rule, error) {
 	respBody, err := c.doRequest(ctx, http.MethodPost, "/api/v1/rules", rule)
 	if err != nil {
@@ -72,6 +90,7 @@ func (c *Client) CreateRule(ctx context.Context, rule *Rule) (*Rule, error) {
 
 	createdRule := result.Data.Attributes
 	createdRule.ID = result.Data.ID
+	createdRule.unescapeHTML()
 	return &createdRule, nil
 }
 
@@ -88,6 +107,7 @@ func (c *Client) GetRule(ctx context.Context, id string) (*Rule, error) {
 
 	rule := result.Data.Attributes
 	rule.ID = result.Data.ID
+	rule.unescapeHTML()
 	return &rule, nil
 }
 
@@ -104,6 +124,7 @@ func (c *Client) UpdateRule(ctx context.Context, id string, rule *Rule) (*Rule, 
 
 	updatedRule := result.Data.Attributes
 	updatedRule.ID = result.Data.ID
+	updatedRule.unescapeHTML()
 	return &updatedRule, nil
 }
 

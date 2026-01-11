@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 )
 
@@ -27,6 +28,12 @@ type CategoryData struct {
 	Attributes Category `json:"attributes"`
 }
 
+// unescapeHTML decodes HTML entities in all string fields
+func (c *Category) unescapeHTML() {
+	c.Name = html.UnescapeString(c.Name)
+	c.Notes = html.UnescapeString(c.Notes)
+}
+
 func (c *Client) CreateCategory(ctx context.Context, category *Category) (*Category, error) {
 	respBody, err := c.doRequest(ctx, http.MethodPost, "/api/v1/categories", category)
 	if err != nil {
@@ -40,6 +47,7 @@ func (c *Client) CreateCategory(ctx context.Context, category *Category) (*Categ
 
 	createdCategory := result.Data.Attributes
 	createdCategory.ID = result.Data.ID
+	createdCategory.unescapeHTML()
 	return &createdCategory, nil
 }
 
@@ -56,6 +64,7 @@ func (c *Client) GetCategory(ctx context.Context, id string) (*Category, error) 
 
 	category := result.Data.Attributes
 	category.ID = result.Data.ID
+	category.unescapeHTML()
 	return &category, nil
 }
 
@@ -72,6 +81,7 @@ func (c *Client) UpdateCategory(ctx context.Context, id string, category *Catego
 
 	updatedCategory := result.Data.Attributes
 	updatedCategory.ID = result.Data.ID
+	updatedCategory.unescapeHTML()
 	return &updatedCategory, nil
 }
 

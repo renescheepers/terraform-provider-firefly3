@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 )
 
@@ -29,6 +30,12 @@ type RuleGroupData struct {
 	Attributes RuleGroup `json:"attributes"`
 }
 
+// unescapeHTML decodes HTML entities in all string fields
+func (rg *RuleGroup) unescapeHTML() {
+	rg.Title = html.UnescapeString(rg.Title)
+	rg.Description = html.UnescapeString(rg.Description)
+}
+
 func (c *Client) CreateRuleGroup(ctx context.Context, ruleGroup *RuleGroup) (*RuleGroup, error) {
 	respBody, err := c.doRequest(ctx, http.MethodPost, "/api/v1/rule-groups", ruleGroup)
 	if err != nil {
@@ -42,6 +49,7 @@ func (c *Client) CreateRuleGroup(ctx context.Context, ruleGroup *RuleGroup) (*Ru
 
 	createdRuleGroup := result.Data.Attributes
 	createdRuleGroup.ID = result.Data.ID
+	createdRuleGroup.unescapeHTML()
 	return &createdRuleGroup, nil
 }
 
@@ -59,6 +67,7 @@ func (c *Client) GetRuleGroup(ctx context.Context, id string) (*RuleGroup, error
 
 	ruleGroup := result.Data.Attributes
 	ruleGroup.ID = result.Data.ID
+	ruleGroup.unescapeHTML()
 	return &ruleGroup, nil
 }
 
@@ -75,6 +84,7 @@ func (c *Client) UpdateRuleGroup(ctx context.Context, id string, ruleGroup *Rule
 
 	updatedRuleGroup := result.Data.Attributes
 	updatedRuleGroup.ID = result.Data.ID
+	updatedRuleGroup.unescapeHTML()
 	return &updatedRuleGroup, nil
 }
 
